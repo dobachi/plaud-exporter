@@ -1,0 +1,53 @@
+{
+    "manifest_version": 3,
+    "name": "Plaud.ai Audio Exporter",
+    "version": "1.0",
+    "description": "One-click audio export for Plaud.ai",
+    "permissions": [
+        "activeTab",
+        "scripting",
+        "clipboardWrite",
+        "notifications",
+        "downloads"
+    ],
+    "background": {
+        "service_worker": "background.js",
+        "type": "module"
+    },
+    "action": {
+        "default_popup": "popup/popup.html",
+        "default_icon": {
+            "16": "assets/icons/icon16.png",
+            "48": "assets/icons/icon48.png",
+            "128": "assets/icons/icon128.png"
+        }
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "https://app.plaud.ai/*"
+            ],
+            "js": [
+                "content.js"
+            ],
+            "run_at": "document_idle"
+        }
+    ],
+    "icons": {
+        "16": "assets/icons/icon16.png",
+        "48": "assets/icons/icon48.png",
+        "128": "assets/icons/icon128.png"
+    },
+    "web_accessible_resources": [
+        {
+            "resources": [
+                "features/audioExport/*.js",
+                "features/elementSelector/*.js",
+                "common/*.js"
+            ],
+            "matches": [
+                "<all_urls>"
+            ]
+        }
+    ]
+}
