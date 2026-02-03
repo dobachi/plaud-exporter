@@ -46,7 +46,7 @@
                 "common/*.js"
             ],
             "matches": [
-                "<all_urls>"
+                "https://app.plaud.ai/*"
             ]
         }
     ]
