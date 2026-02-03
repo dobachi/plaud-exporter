@@ -1,214 +1,201 @@
 /*
-  General styles for the popup UI
-  Sets the width, padding, and base font for the popup.
+  Popup UI styles
+  Merged from inline styles (popup.html) and external stylesheet.
+  Inline styles take precedence where rules conflict.
 */
-body {
-    width: 350px;
-    padding: 16px;
-    font-family: Arial, sans-serif;
-  }
 
-  /*
-    Style for headings in the popup.
-    Removes the top margin and sets color and font size.
-  */
-  h2 {
+body {
+    font-family: Arial, sans-serif;
+    width: 400px;
+    margin: 0;
+    padding: 10px;
+}
+
+h2 {
     margin-top: 0;
     color: #333;
     font-size: 16px;
-  }
+}
 
-  /*
-    Base style for all buttons.
-    Sets background, text color, border, border-radius, padding, font weight, and width.
-  */
-  button {
-    background-color: #2196f3;
+.title {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.section {
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+button {
+    background-color: #4285f4;
     color: white;
     border: none;
+    padding: 8px 15px;
     border-radius: 4px;
-    padding: 10px 15px;
-    font-weight: bold;
     cursor: pointer;
-    width: 100%;
+    margin-right: 5px;
+    margin-bottom: 5px;
+}
+
+button:hover {
+    background-color: #3367d6;
+}
+
+button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+button.active {
+    background-color: #ea4335;
+}
+
+button.secondary {
+    background-color: #34a853;
+}
+
+button.warning {
+    background-color: #ea4335;
+}
+
+button.success {
+    background-color: #4caf50;
+}
+
+#exportAllBtn {
+    background-color: #4caf50;
+}
+
+#stopExportBtn {
+    display: none;
+}
+
+.status {
     margin-top: 10px;
-  }
+    padding: 8px;
+    border-radius: 4px;
+    display: none;
+}
 
-  /*
-    Hover effect for buttons.
-    Darkens the button background on hover.
-  */
-  button:hover {
-    background-color: #0b7dda;
-  }
+.status.info {
+    background-color: #e8f0fe;
+    color: #1967d2;
+    display: block;
+}
 
-  /*
-    Secondary button style.
-    Uses a gray background.
-  */
-  button.secondary {
-    background-color: #9e9e9e;
-  }
+.status.success {
+    background-color: #e6f4ea;
+    color: #137333;
+    display: block;
+}
 
-  /*
-    Active button style.
-    Uses a red background for active state.
-  */
-  button.active {
-    background-color: #f44336;
-  }
+.status.error {
+    background-color: #fce8e6;
+    color: #c5221f;
+    display: block;
+}
 
-  /*
-    Success button style.
-    Uses a green background to indicate success.
-  */
-  button.success {
-    background-color: #4caf50;
-  }
+.element-item {
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-bottom: 5px;
+    cursor: pointer;
+}
 
-  /*
-    Specific style for the "Export All Files" button.
-    Overrides the default with a green background.
-  */
-  #exportAllBtn {
-    background-color: #4caf50;
-  }
+.element-item:hover {
+    background-color: #f5f5f5;
+}
 
-  /*
-    Section styling for grouping elements.
-    Adds top margin, a border-top for separation, and padding.
-  */
-  .section {
-    margin-top: 20px;
-    border-top: 1px solid #eee;
-    padding-top: 10px;
-  }
+.element-item:last-child {
+    border-bottom: none;
+}
 
-  /*
-    Styles for the container displaying selected elements.
-    Adds margin, maximum height, scroll overflow, and border styling.
-  */
-  #selectedElements {
+.element-item.empty {
+    color: #666;
+    font-style: italic;
+    cursor: default;
+}
+
+.element-details {
+    display: none;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    margin-top: 10px;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.element-details.active {
+    display: block;
+}
+
+.element-details pre {
+    max-height: 100px;
+    overflow-y: auto;
+    background-color: #f0f0f0;
+    padding: 5px;
+    border-radius: 3px;
+    font-size: 11px;
+}
+
+#exportStatus {
+    background-color: #f5f5f5;
+    border-radius: 4px;
+    padding: 10px;
+    margin-bottom: 15px;
+    display: none;
+}
+
+#exportStatus h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: #4285f4;
+}
+
+.status-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+}
+
+.status-item span:first-child {
+    font-weight: bold;
+}
+
+.version {
+    font-size: 10px;
+    color: #888;
+    text-align: right;
+    margin-top: 5px;
+}
+
+#selectedElements {
     margin-top: 10px;
     max-height: 200px;
     overflow-y: auto;
     border: 1px solid #eee;
     border-radius: 4px;
-  }
+}
 
-  /*
-    Style for each item in the selected elements list.
-    Provides padding, a bottom border, and changes cursor to pointer.
-  */
-  .element-item {
-    padding: 8px;
-    border-bottom: 1px solid #eee;
-    cursor: pointer;
-  }
-
-  /*
-    Removes the bottom border from the last selected element item.
-  */
-  .element-item:last-child {
-    border-bottom: none;
-  }
-
-  /*
-    Hover effect for selected element items.
-    Changes background color on hover.
-  */
-  .element-item:hover {
-    background-color: #f5f5f5;
-  }
-
-  /*
-    Styles for the element details section.
-    Initially hidden, styled with background color, padding, and monospace font.
-  */
-  .element-details {
-    display: none;
-    margin-top: 10px;
-    background-color: #f9f9f9;
-    padding: 10px;
-    border-radius: 4px;
-    font-family: monospace;
-    font-size: 12px;
-    white-space: pre-wrap;
-    overflow-x: auto;
-  }
-
-  /*
-    Active state for element details.
-    Displays the element details when active.
-  */
-  .element-details.active {
-    display: block;
-  }
-
-  /*
-    General status message styling.
-    Adds margin, padding, border-radius, text alignment, and font sizing.
-  */
-  .status {
-    margin-top: 15px;
-    padding: 8px;
-    border-radius: 4px;
-    text-align: center;
-    font-size: 14px;
-    min-height: 20px;
-  }
-
-  /*
-    Success message style.
-    Uses a light green background and darker green text.
-  */
-  .success {
-    background-color: #e8f5e9;
-    color: #388e3c;
-  }
-
-  /*
-    Error message style.
-    Uses a light red background and darker red text.
-  */
-  .error {
-    background-color: #ffebee;
-    color: #d32f2f;
-  }
-
-  /*
-    Information message style.
-    Uses a light blue background and darker blue text.
-  */
-  .info {
-    background-color: #e3f2fd;
-    color: #1976d2;
-  }
-
-  /*
-    Style for copy button within the popup.
-    Uses an orange background with smaller padding and font size.
-  */
-  .copy-button {
+.copy-button {
     background-color: #ff9800;
     padding: 5px 10px;
     font-size: 12px;
     margin-top: 5px;
-  }
+}
 
-  /*
-    Container for grouping multiple buttons.
-    Uses flexbox with gap for spacing.
-  */
-  .button-container {
+.button-container {
     display: flex;
     gap: 10px;
-  }
+}
 
-  /*
-    Styles for buttons within a flex container.
-    Makes them equally share the available space.
-  */
-  .button-container button {
+.button-container button {
     flex: 1;
-  }
+}
