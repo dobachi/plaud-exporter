@@ -199,9 +199,25 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
+  // Helper to safely clear all children from a container
+  function clearChildren(container) {
+    while (container.firstChild) {
+      container.removeChild(container.firstChild);
+    }
+  }
+
+  // Helper to append a detail row (label + value) to a parent element
+  function appendDetailRow(parent, label, value) {
+    const strong = document.createElement("strong");
+    strong.textContent = label;
+    parent.appendChild(strong);
+    parent.appendChild(document.createTextNode(" " + value));
+    parent.appendChild(document.createElement("br"));
+  }
+
   // Update the UI list showing selected elements
   function updateSelectedElementsList() {
-    selectedElementsContainer.innerHTML = "";
+    clearChildren(selectedElementsContainer);
     if (selectedElements.length === 0) {
       const emptyItem = document.createElement("div");
       emptyItem.className = "element-item empty";
@@ -214,11 +230,12 @@ document.addEventListener("DOMContentLoaded", function () {
     selectedElements.forEach((element, index) => {
       const item = document.createElement("div");
       item.className = "element-item";
-      item.innerHTML = `<strong>Element ${index + 1}:</strong> ${
-        element.tagName
-      } - ${
-        element.innerText ? element.innerText.substring(0, 30) : "[No text]"
-      }`;
+      const itemStrong = document.createElement("strong");
+      itemStrong.textContent = `Element ${index + 1}:`;
+      item.appendChild(itemStrong);
+      const itemText = element.tagName + " - " +
+        (element.innerText ? element.innerText.substring(0, 30) : "[No text]");
+      item.appendChild(document.createTextNode(" " + itemText));
 
       // Add click handler to toggle display of detailed element info
       item.addEventListener("click", function () {
@@ -233,22 +250,24 @@ document.addEventListener("DOMContentLoaded", function () {
             .querySelectorAll(".element-details")
             .forEach((el) => el.classList.remove("active"));
 
-          // Create and display new element details
+          // Create and display new element details using safe DOM construction
           const details = document.createElement("div");
           details.id = detailsId;
           details.className = "element-details active";
-          details.innerHTML = `
-                    <strong>Tag:</strong> ${element.tagName}<br>
-                    <strong>XPath:</strong> ${element.xPath}<br>
-                    <strong>CSS Selector:</strong> ${element.cssSelector}<br>
-                    <strong>Class:</strong> ${element.className}<br>
-                    <strong>ID:</strong> ${element.id}<br>
-                    <strong>Text:</strong> ${element.innerText}<br>
-                    <strong>HTML:</strong> <pre>${escapeHtml(
-                      element.outerHTML
-                    )}</pre>
-                  `;
-          elementDetailsContainer.innerHTML = "";
+          appendDetailRow(details, "Tag:", element.tagName);
+          appendDetailRow(details, "XPath:", element.xPath);
+          appendDetailRow(details, "CSS Selector:", element.cssSelector);
+          appendDetailRow(details, "Class:", element.className);
+          appendDetailRow(details, "ID:", element.id);
+          appendDetailRow(details, "Text:", element.innerText);
+          const htmlLabel = document.createElement("strong");
+          htmlLabel.textContent = "HTML:";
+          details.appendChild(htmlLabel);
+          details.appendChild(document.createTextNode(" "));
+          const pre = document.createElement("pre");
+          pre.textContent = element.outerHTML;
+          details.appendChild(pre);
+          clearChildren(elementDetailsContainer);
           elementDetailsContainer.appendChild(details);
         }
       });
@@ -314,7 +333,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Hide the container if no data or export is stopped
     if (!data || data.status === "stopped") {
-      exportStatusContainer.innerHTML = "";
+      clearChildren(exportStatusContainer);
       exportStatusContainer.style.display = "none";
       return;
     }
@@ -328,22 +347,28 @@ document.addEventListener("DOMContentLoaded", function () {
     const seconds = elapsedSeconds % 60;
     const timeString = `${minutes}m ${seconds}s`;
 
-    // Update the container with current export status details
-    exportStatusContainer.innerHTML = `
-          <h3>Export in Progress</h3>
-          <div class="status-item">
-            <span>Files Processed:</span>
-            <span>${data.filesProcessed}</span>
-          </div>
-          <div class="status-item">
-            <span>Errors:</span>
-            <span>${data.filesErrored}</span>
-          </div>
-          <div class="status-item">
-            <span>Running Time:</span>
-            <span>${timeString}</span>
-          </div>
-        `;
+    // Update the container with current export status details using safe DOM
+    clearChildren(exportStatusContainer);
+
+    const heading = document.createElement("h3");
+    heading.textContent = "Export in Progress";
+    exportStatusContainer.appendChild(heading);
+
+    function appendStatusItem(label, value) {
+      const row = document.createElement("div");
+      row.className = "status-item";
+      const labelSpan = document.createElement("span");
+      labelSpan.textContent = label;
+      const valueSpan = document.createElement("span");
+      valueSpan.textContent = value;
+      row.appendChild(labelSpan);
+      row.appendChild(valueSpan);
+      exportStatusContainer.appendChild(row);
+    }
+
+    appendStatusItem("Files Processed:", data.filesProcessed);
+    appendStatusItem("Errors:", data.filesErrored);
+    appendStatusItem("Running Time:", timeString);
   }
 
   // Enable or disable export-related control buttons based on export state
