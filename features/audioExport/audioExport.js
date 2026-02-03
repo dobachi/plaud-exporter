@@ -95,6 +95,7 @@ export async function runExportAll(backgroundMode = false) {
   let fileCount = 0;
   let errorCount = 0;
   const maxErrors = 3;
+  let scrollIntervalId = null;
 
   // Define selectors (adjust these based on Plaud.ai's actual UI)
   // It's better to use more stable selectors if available (e.g., data-testid, aria-label)
@@ -192,13 +193,17 @@ export async function runExportAll(backgroundMode = false) {
       console.log(`Starting to process "${fileTitle}"...`);
 
       try {
-        // --- Background mode activity remains the same ---
+        // --- Background mode activity ---
+        if (scrollIntervalId) {
+          clearInterval(scrollIntervalId);
+          scrollIntervalId = null;
+        }
         if (backgroundMode && document.visibilityState === "hidden") {
           console.log("Page is hidden but continuing export in background");
           if (typeof document.hidden !== "undefined") {
-            setInterval(() => {
+            scrollIntervalId = setInterval(() => {
               fileElement.scrollIntoView({ behavior: "auto" });
-            }, 1000); // This timer is for activity, not workflow timing
+            }, 1000);
           }
         }
         // --- End background mode activity ---
@@ -349,6 +354,12 @@ export async function runExportAll(backgroundMode = false) {
         // Reset the DOM state after deletion
         await resetDomState();
 
+        // Clean up scroll interval for this file
+        if (scrollIntervalId) {
+          clearInterval(scrollIntervalId);
+          scrollIntervalId = null;
+        }
+
         // Mark the file as processed
         processedTitles.add(fileTitle);
         updateProgress(fileTitle);
@@ -357,6 +368,12 @@ export async function runExportAll(backgroundMode = false) {
         );
         errorCount = 0; // Reset error counter
       } catch (error) {
+        // Clean up scroll interval on error
+        if (scrollIntervalId) {
+          clearInterval(scrollIntervalId);
+          scrollIntervalId = null;
+        }
+
         errorCount++;
         console.error(
           `File #${fileCount} ("${fileTitle}") failed:`,
@@ -399,6 +416,7 @@ export async function runExportAll(backgroundMode = false) {
 // --- setupDownloadErrorListener, removeDownloadErrorListener, waitForDownloadResult remain the same ---
 /** Sets up a listener to detect download errors. */
 function setupDownloadErrorListener() {
+  removeDownloadErrorListener(); // Clean up any existing listener first
   _downloadErrorOccurred = false;
   _downloadErrorListener = function (event) {
     if (event.target.localName === "a" && event.type === "error") {

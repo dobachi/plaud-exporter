@@ -477,6 +477,11 @@ document.addEventListener("DOMContentLoaded", function () {
       // Update the export status display when a new update is received
       updateExportStatus(request.data);
     }
-    return true;
+    return false;
+  });
+
+  // Clean up polling timers when the popup is closed
+  window.addEventListener("beforeunload", () => {
+    stopStatusPolling();
   });
 });
