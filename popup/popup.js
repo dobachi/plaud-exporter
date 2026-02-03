@@ -399,11 +399,32 @@ document.addEventListener("DOMContentLoaded", function () {
   // Polling for Export Status Updates
   // -----------------------------
   let statusPollingInterval = null;
-  function startStatusPolling() {
-    // Clear any existing polling interval
+  let statusPollingTimeout = null;
+  const MAX_POLLING_DURATION = 2 * 60 * 60 * 1000; // 2 hours
+
+  function stopStatusPolling() {
     if (statusPollingInterval) {
       clearInterval(statusPollingInterval);
+      statusPollingInterval = null;
     }
+    if (statusPollingTimeout) {
+      clearTimeout(statusPollingTimeout);
+      statusPollingTimeout = null;
+    }
+  }
+
+  function startStatusPolling() {
+    // Clear any existing polling
+    stopStatusPolling();
+
+    // Set maximum polling duration
+    statusPollingTimeout = setTimeout(() => {
+      console.warn("Polling max duration reached (2 hours). Stopping polling.");
+      stopStatusPolling();
+      exportActive = false;
+      updateExportControls();
+      updateExportStatus(null);
+    }, MAX_POLLING_DURATION);
 
     // Poll for export status every 2 seconds
     statusPollingInterval = setInterval(() => {
@@ -422,8 +443,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 updateExportStatus(response.exportData);
               } else {
                 // Stop polling if export is no longer active
-                clearInterval(statusPollingInterval);
-                statusPollingInterval = null;
+                stopStatusPolling();
                 exportActive = false;
                 updateExportControls();
                 updateExportStatus(null);

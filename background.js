@@ -97,9 +97,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         }
 
         // Notify the user via Chrome notifications about the stopped export
-        chrome.notifications.create({
+        chrome.notifications.create(`export-stopped-${tabId}`, {
           type: "basic",
-          iconUrl: "assets/icons/icon128.png", // Use relative path from manifest
+          iconUrl: "assets/icons/icon128.png",
           title: "Export Stopped",
           message: "The export process has been stopped.",
           priority: 1,
@@ -141,9 +141,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       };
 
       // Notify the user that the export has started
-      chrome.notifications.create({
+      chrome.notifications.create(`export-started-${tabId}`, {
         type: "basic",
-        iconUrl: "assets/icons/icon128.png", // Use relative path from manifest
+        iconUrl: "assets/icons/icon128.png",
         title: "Audio Export Started",
         message:
           "Export process is running in the background. You can switch tabs safely.",
@@ -186,9 +186,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           message.data.filesProcessed % 10 === 0 &&
           message.data.filesProcessed > 0
         ) {
-          chrome.notifications.create({
+          chrome.notifications.create(`export-progress-${tabId}`, {
             type: "basic",
-            iconUrl: "assets/icons/icon128.png", // Use relative path from manifest
+            iconUrl: "assets/icons/icon128.png",
             title: "Export Progress",
             message: `Processed ${message.data.filesProcessed} files so far.`,
             priority: 1,
@@ -213,9 +213,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         // Add other stats if needed
 
         // Notify the user of export completion with statistics
-        chrome.notifications.create({
+        chrome.notifications.create(`export-complete-${tabId}`, {
           type: "basic",
-          iconUrl: "assets/icons/icon128.png", // Use relative path from manifest
+          iconUrl: "assets/icons/icon128.png",
           title: "Audio Export Complete",
           message: `Processed ${stats.filesProcessed} files. ${stats.filesErrored} errors.`,
           priority: 2,
@@ -265,9 +265,32 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
  * Prevents the browser from suspending the tab when it's not visible and checks for stalled exports.
  *
  * @param {number} tabId - The ID of the tab to keep alive.
+ * @param {number} [startTime] - The timestamp when keepTabAlive was first called for this tab.
  */
-async function keepTabAlive(tabId) {
+const MAX_KEEP_ALIVE_DURATION = 4 * 60 * 60 * 1000; // 4 hours
+
+async function keepTabAlive(tabId, startTime) {
+  if (!startTime) {
+    startTime = Date.now();
+  }
+
   try {
+    // Check max runtime
+    if (Date.now() - startTime > MAX_KEEP_ALIVE_DURATION) {
+      console.warn(`keepTabAlive: Max duration (4 hours) reached for tab ${tabId}. Stopping.`);
+      activeTabIds.delete(tabId);
+      stopFlags.delete(tabId);
+      delete activeExports[tabId];
+      chrome.notifications.create(`export-timeout-${tabId}`, {
+        type: "basic",
+        iconUrl: "assets/icons/icon128.png",
+        title: "Export Timed Out",
+        message: "Export process was stopped after reaching the maximum duration (4 hours).",
+        priority: 2,
+      });
+      return;
+    }
+
     // Check if the export for this tab is still marked as active
     if (!activeTabIds.has(tabId)) {
       console.log(
@@ -309,11 +332,11 @@ async function keepTabAlive(tabId) {
             timeSinceLastUpdate / 1000
           )}s ago.`
         );
-        chrome.notifications.create({
+        chrome.notifications.create(`export-stalled-${tabId}`, {
           type: "basic",
-          iconUrl: "assets/icons/icon128.png", // Use relative path from manifest
+          iconUrl: "assets/icons/icon128.png",
           title: "Export May Be Stalled",
-          message: `No updates received for export in tab ${tabId} for 2 minutes. Check the export tab.`,
+          message: `No updates received for export for 2 minutes. Check the export tab.`,
           priority: 2,
         });
         // Consider adding logic here to auto-stop stalled exports if desired
@@ -322,7 +345,7 @@ async function keepTabAlive(tabId) {
 
     // Schedule the next keep-alive check in 30 seconds
     console.log(`keepTabAlive: Scheduling next check for tab ${tabId} in 30s.`);
-    setTimeout(() => keepTabAlive(tabId), 30000);
+    setTimeout(() => keepTabAlive(tabId, startTime), 30000);
   } catch (error) {
     console.error(`keepTabAlive: Error for tab ${tabId}:`, error);
     // Clean up on error to prevent infinite loops or resource leaks
@@ -360,11 +383,11 @@ chrome.tabs.onRemoved.addListener((tabId, removeInfo) => {
     stopFlags.delete(tabId);
     delete activeExports[tabId];
     // Optionally notify the user that closing the tab stopped the export
-    chrome.notifications.create({
+    chrome.notifications.create(`export-tab-closed-${tabId}`, {
       type: "basic",
       iconUrl: "assets/icons/icon128.png",
       title: "Export Stopped",
-      message: `Export process stopped because the tab was closed.`,
+      message: "Export process stopped because the tab was closed.",
       priority: 1,
     });
   }

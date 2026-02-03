@@ -166,4 +166,11 @@
       console.log("Page hidden but export is running in background");
     }
   });
+
+  /**
+   * Catch unhandled promise rejections to prevent silent failures.
+   */
+  window.addEventListener("unhandledrejection", function (event) {
+    console.error("Unhandled promise rejection in content script:", event.reason);
+  });
 })();
