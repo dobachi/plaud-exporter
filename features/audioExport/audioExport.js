@@ -1,6 +1,12 @@
 /**
  * features/audioExport/audioExport.js
  */
+
+// Module-scoped variables (previously on window)
+let _downloadErrorOccurred = false;
+let _downloadErrorListener = null;
+let _originalConsoleError = null;
+
 import {
   clickElement,
   rightClickWithRetry,
@@ -261,14 +267,14 @@ export async function runExportAll(backgroundMode = false) {
         }
 
         // 5. Locate and click the final export button. Start download monitoring.
-        window.downloadErrorOccurred = false;
+        _downloadErrorOccurred = false;
         await clickElement(exportButton);
 
         // Wait for download result (this already has a timeout)
         // The fixed 5-sec delay is removed, relying solely on waitForDownloadResult
         await waitForDownloadResult(); // This function internally uses polling & timeout
 
-        if (window.downloadErrorOccurred) {
+        if (_downloadErrorOccurred) {
           throw new Error("Download failed - browser reported download error");
         }
         console.log("Download initiated/completed for", fileTitle);
@@ -384,40 +390,40 @@ export async function runExportAll(backgroundMode = false) {
 // --- setupDownloadErrorListener, removeDownloadErrorListener, waitForDownloadResult remain the same ---
 /** Sets up a listener to detect download errors. */
 function setupDownloadErrorListener() {
-  window.downloadErrorOccurred = false;
-  window.downloadErrorListener = function (event) {
+  _downloadErrorOccurred = false;
+  _downloadErrorListener = function (event) {
     if (event.target.localName === "a" && event.type === "error") {
       console.error("Download error detected:", event);
-      window.downloadErrorOccurred = true;
+      _downloadErrorOccurred = true;
     }
   };
-  document.addEventListener("error", window.downloadErrorListener, true);
-  window.originalConsoleError = console.error;
+  document.addEventListener("error", _downloadErrorListener, true);
+  _originalConsoleError = console.error;
   console.error = function () {
     for (let i = 0; i < arguments.length; i++) {
       const arg = String(arguments[i]);
       if (arg.includes("download") && arg.includes("error")) {
-        window.downloadErrorOccurred = true;
+        _downloadErrorOccurred = true;
         break;
       }
     }
-    window.originalConsoleError.apply(console, arguments);
+    _originalConsoleError.apply(console, arguments);
   };
 }
 /** Removes the download error listener. */
 function removeDownloadErrorListener() {
-  if (window.downloadErrorListener) {
-    document.removeEventListener("error", window.downloadErrorListener, true);
+  if (_downloadErrorListener) {
+    document.removeEventListener("error", _downloadErrorListener, true);
   }
-  if (window.originalConsoleError) {
-    console.error = window.originalConsoleError;
+  if (_originalConsoleError) {
+    console.error = _originalConsoleError;
   }
 }
 /** Waits for download error flag or timeout. */
 function waitForDownloadResult() {
   return new Promise((resolve) => {
     const checkInterval = setInterval(() => {
-      if (window.downloadErrorOccurred) {
+      if (_downloadErrorOccurred) {
         clearInterval(checkInterval);
         resolve();
       }
