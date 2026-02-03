@@ -161,16 +161,25 @@ document.addEventListener("DOMContentLoaded", function () {
       updateStatus("No elements selected to copy.", "error");
       return;
     }
-    // Concatenate element details into a formatted string
+
+    // Confirm before copying to clipboard
+    if (!confirm(`Copy ${selectedElements.length} element(s) info to clipboard?`)) {
+      return;
+    }
+
+    // Concatenate element details into a formatted string (outerHTML truncated to 200 chars)
     const elementInfo = selectedElements
       .map((el, index) => {
+        const truncatedHtml = el.outerHTML
+          ? el.outerHTML.substring(0, 200) + (el.outerHTML.length > 200 ? "..." : "")
+          : "";
         return `Element ${index + 1} (${el.tagName}):
           XPath: ${el.xPath}
           CSS Selector: ${el.cssSelector}
           Class: ${el.className}
           ID: ${el.id}
           Text: ${el.innerText}
-          HTML: ${el.outerHTML}`;
+          HTML: ${truncatedHtml}`;
       })
       .join("\n--------------\n\n");
 
