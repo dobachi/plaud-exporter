@@ -10,6 +10,9 @@
         "notifications",
         "downloads"
     ],
+    "host_permissions": [
+        "https://app.plaud.ai/*"
+    ],
     "background": {
         "service_worker": "background.js",
         "type": "module"
