@@ -209,8 +209,10 @@ export async function runExportAll(backgroundMode = false) {
         // const shareIcon = await waitForElement(shareIconSelector, 10000);
         // Or fallback to XPath if necessary, but prefer CSS selectors
         const shareIcon = await findElementByXPath(shareIconXPath, 10000); // Using existing XPath with wait
-        if (!shareIcon)
-          throw new Error("Could not find share icon after click");
+        if (!shareIcon) {
+          console.warn("Could not find share icon after click for:", fileTitle);
+          throw new Error("Export step failed: unable to locate share control");
+        }
 
         // 2. Click the share icon. Wait for the export menu/popover to appear.
         await clickElement(shareIcon);
@@ -231,9 +233,8 @@ export async function runExportAll(backgroundMode = false) {
           );
         }
         if (!exportAudioOption) {
-          throw new Error(
-            `Could not find '${exportAudioOptionText}' option in popover`
-          );
+          console.warn(`Could not find '${exportAudioOptionText}' option in popover for:`, fileTitle);
+          throw new Error("Export step failed: audio export option not available");
         }
 
         // 3. Click the "Export Audio" option. Wait for the format selection UI (e.g., MP3 option) to appear.
@@ -248,7 +249,10 @@ export async function runExportAll(backgroundMode = false) {
         if (!mp3Option) {
           mp3Option = await findElementByText(mp3OptionText, "div");
         }
-        if (!mp3Option) throw new Error("Could not find MP3 option");
+        if (!mp3Option) {
+          console.warn("Could not find MP3 option for:", fileTitle);
+          throw new Error("Export step failed: format selection unavailable");
+        }
 
         // 4. Click the MP3 format option. Wait for the final export button to appear/become enabled.
         await clickElement(mp3Option);
@@ -263,7 +267,8 @@ export async function runExportAll(backgroundMode = false) {
           exportButton = await findElementByText(exportButtonText, "div");
         }
         if (!exportButton) {
-          throw new Error("Could not find final export button");
+          console.warn("Could not find final export button for:", fileTitle);
+          throw new Error("Export step failed: export action unavailable");
         }
 
         // 5. Locate and click the final export button. Start download monitoring.
@@ -275,7 +280,8 @@ export async function runExportAll(backgroundMode = false) {
         await waitForDownloadResult(); // This function internally uses polling & timeout
 
         if (_downloadErrorOccurred) {
-          throw new Error("Download failed - browser reported download error");
+          console.warn("Download failed - browser reported download error for:", fileTitle);
+          throw new Error("Download failed for this file");
         }
         console.log("Download initiated/completed for", fileTitle);
 
