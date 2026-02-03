@@ -1,5 +1,47 @@
 // background.js - Service Worker for Audio Export Extension
 
+const ALLOWED_ORIGIN = "https://app.plaud.ai";
+
+/**
+ * Validates that a message sender is from this extension or an allowed origin.
+ * @param {object} sender - The MessageSender object from chrome.runtime.onMessage.
+ * @returns {boolean} Whether the sender is valid.
+ */
+function isValidSender(sender) {
+  // Allow messages from our own extension (popup, other extension pages)
+  if (sender.id === chrome.runtime.id && !sender.tab) {
+    return true;
+  }
+  // Allow messages from content scripts on permitted origins
+  if (
+    sender.id === chrome.runtime.id &&
+    sender.tab &&
+    sender.url &&
+    sender.url.startsWith(ALLOWED_ORIGIN)
+  ) {
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Validates that a tab ID is a positive integer.
+ * @param {*} tabId - The tab ID to validate.
+ * @returns {boolean} Whether the tab ID is valid.
+ */
+function isValidTabId(tabId) {
+  return Number.isInteger(tabId) && tabId > 0;
+}
+
+/** Whitelist of allowed keys for exportProgressUpdate data merge. */
+const ALLOWED_PROGRESS_KEYS = [
+  "filesProcessed",
+  "filesErrored",
+  "filesSkipped",
+  "currentTitle",
+  "status",
+];
+
 /**
  * Global variables to track export state:
  * - activeExports: Object mapping tab IDs to their export status and statistics.
@@ -22,9 +64,20 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   console.log("Background received message:", message.action);
 
   try {
+    // Validate sender origin
+    if (!isValidSender(sender)) {
+      console.warn("Rejected message from invalid sender:", sender);
+      sendResponse({ success: false, error: "Unauthorized sender" });
+      return false;
+    }
+
     // Handle stop export request from popup or content script
     if (message.action === "stopExport") {
       const tabId = message.tabId;
+      if (!isValidTabId(tabId)) {
+        sendResponse({ success: false, error: "Invalid tab ID" });
+        return false;
+      }
       if (activeTabIds.has(tabId)) {
         // Mark the export as stopped and remove from active tracking
         stopFlags.add(tabId);
@@ -69,6 +122,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     // Start a new background export process
     if (message.action === "startBackgroundExport") {
       const tabId = message.tabId;
+      if (!isValidTabId(tabId)) {
+        sendResponse({ success: false, error: "Invalid tab ID" });
+        return false;
+      }
 
       // Begin tracking the export for this tab
       activeTabIds.add(tabId);
@@ -115,12 +172,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       const tabId = sender.tab?.id;
 
       if (tabId && activeExports[tabId]) {
-        // Merge new progress data with existing export stats
-        activeExports[tabId] = {
-          ...activeExports[tabId],
-          ...message.data,
-          lastUpdateTime: Date.now(),
-        };
+        // Merge only whitelisted keys from progress data
+        const data = message.data || {};
+        for (const key of ALLOWED_PROGRESS_KEYS) {
+          if (key in data) {
+            activeExports[tabId][key] = data[key];
+          }
+        }
+        activeExports[tabId].lastUpdateTime = Date.now();
 
         // Issue periodic notifications for every 10 files processed
         if (
@@ -178,6 +237,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     // Provide the current export status for a given tab
     if (message.action === "getExportStatus") {
       const tabId = message.tabId;
+      if (!isValidTabId(tabId)) {
+        sendResponse({ success: false, error: "Invalid tab ID" });
+        return false;
+      }
       sendResponse({
         success: true,
         isRunning: activeTabIds.has(tabId),

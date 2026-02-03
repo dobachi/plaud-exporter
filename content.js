@@ -41,6 +41,12 @@
    * and initiating the export process.
    */
   chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    // Validate sender is from our own extension
+    if (sender.id !== chrome.runtime.id) {
+      console.warn("Rejected message from unknown sender:", sender.id);
+      return false;
+    }
+
     // Handle request to stop the export process immediately.
     if (request.action === "stopExportProcess") {
       console.log(
