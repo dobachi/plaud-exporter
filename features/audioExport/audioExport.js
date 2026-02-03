@@ -102,6 +102,9 @@ export async function runExportAll(backgroundMode = false) {
   const fileTitleSelector = ".title"; // Selector for the title within a file item
   // --- Selectors for export steps (These are EXAMPLE selectors and likely need adjustment) ---
   // Use more robust selectors if possible (IDs, data attributes, ARIA labels)
+  // Note: These XPaths use hardcoded string literals only (no dynamic values),
+  // so XPath injection is not a concern here. If dynamic values are ever used,
+  // apply escapeXPathValue() from selectorUtils.js.
   const shareIconXPath =
     '//*[@id="rightBox"]/div[2]/div[1]/span[1]/span[1]/div[1]/div[1]'; // Very fragile XPath
   const shareIconSelector =

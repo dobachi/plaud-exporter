@@ -89,10 +89,31 @@ export function getElementAttributes(element) {
   return attributes;
 }
 
+/**
+ * Escapes a string value for safe use in XPath expressions.
+ * Handles strings containing single quotes, double quotes, or both.
+ * @param {string} value - The value to escape.
+ * @returns {string} The escaped value wrapped in appropriate quotes.
+ */
+export function escapeXPathValue(value) {
+  if (!value.includes("'")) {
+    return `'${value}'`;
+  }
+  if (!value.includes('"')) {
+    return `"${value}"`;
+  }
+  // Contains both single and double quotes: use concat()
+  const parts = value.split("'");
+  const escaped = parts.map((p, i) =>
+    i < parts.length - 1 ? `'${p}',"'"` : `'${p}'`
+  ).join(",");
+  return `concat(${escaped})`;
+}
+
 /** Computes an XPath string for the element. */
 export function getXPathForElement(element) {
   if (element.id) {
-    return `//*[@id="${element.id}"]`;
+    return `//*[@id=${escapeXPathValue(element.id)}]`;
   }
   if (element === document.body) {
     return "/html/body";
